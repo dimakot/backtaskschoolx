@@ -73,6 +73,7 @@ class TaskResponse(BaseModel):
     description: Optional[str]
     status: str
     priority: str
+    owner_id: int
     created_at: datetime
     updated_at: Optional[datetime]
 

@@ -11,6 +11,13 @@ REST API для управления задачами.
 - **Alembic** — миграции БД
 - **Uvicorn** — ASGI сервер
 
+## Что реализовано
+
+- Подключение к БД через SQLAlchemy
+- Аутентификация: `/auth/register`, `/auth/login`
+- Repository Pattern для работы с данными
+- Защищенные эндпоинты задач (Bearer Token)
+
 ## Структура
 
 ```
@@ -18,12 +25,21 @@ backtask/
 ├── main.py              # Точка входа
 ├── alembic.ini          # Конфиг Alembic
 ├── api/
+│   ├── auth.py          # Эндпоинты авторизации
 │   └── tasks.py         # Эндпоинты задач
+├── auth/
+│   └── dependencies.py  # Проверка токена и текущий пользователь
+├── core/
+│   └── security.py      # JWT и хеширование пароля
+├── repositories/
+│   ├── user_repository.py
+│   └── task_repository.py
 ├── schemas/
-│   └── task.py          # Pydantic-схемы
+│   ├── auth.py          # Pydantic-схемы для auth
+│   └── task.py          # Pydantic-схемы задач
 ├── database/
 │   ├── db.py            # Подключение к PostgreSQL
-│   └── models.py        # SQLAlchemy модель
+│   └── models.py        # SQLAlchemy модели User/Task
 └── alembic/
     └── versions/        # Файлы миграций
 ```
@@ -61,6 +77,7 @@ psql -d postgres -c "CREATE DATABASE backtask;"
 
 ```bash
 export DATABASE_URL="postgresql://ваш_пользователь:ваш_пароль@localhost:5432/backtask"
+export SECRET_KEY="ваш_секретный_ключ"
 ```
 
 Также нужно обновить `sqlalchemy.url` в файле `alembic.ini` на ваш URL.
@@ -81,6 +98,15 @@ uv run python -m uvicorn main:app --reload
 
 ## API эндпоинты
 
+### Аутентификация
+
+| Метод | URL            | Описание                              |
+|-------|----------------|---------------------------------------|
+| POST  | /auth/register | Регистрация пользователя + JWT токен |
+| POST  | /auth/login    | Логин пользователя + JWT токен       |
+
+### Задачи (требуют Bearer Token)
+
 | Метод  | URL             | Описание                  |
 |--------|-----------------|---------------------------|
 | POST   | /tasks/         | Создать задачу            |
@@ -88,6 +114,13 @@ uv run python -m uvicorn main:app --reload
 | GET    | /tasks/{id}     | Получить задачу по ID     |
 | PATCH  | /tasks/{id}     | Обновить задачу           |
 | DELETE | /tasks/{id}     | Удалить задачу            |
+
+Пример передачи токена:
+
+```bash
+curl -X GET http://127.0.0.1:8000/tasks/ \
+    -H "Authorization: Bearer <ваш_access_token>"
+```
 
 ## Валидация
 

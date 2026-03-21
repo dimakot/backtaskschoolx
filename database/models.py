@@ -1,6 +1,18 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from database.db import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    tasks = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
 
 
 class Task(Base):
@@ -11,5 +23,8 @@ class Task(Base):
     description = Column(Text, nullable=True)
     status = Column(String(20), default="new", nullable=False)
     priority = Column(String(10), default="medium", nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    owner = relationship("User", back_populates="tasks")

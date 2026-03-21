@@ -5,7 +5,7 @@ import os
 # URL для подключения к PostgreSQL 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "твоя ссылка на PostgreSQL, например: postgresql://user:password@localhost/dbname"
+    "postgresql://postgres:postgres@localhost:5432/backtask"
 )
 
 engine = create_engine(DATABASE_URL)
