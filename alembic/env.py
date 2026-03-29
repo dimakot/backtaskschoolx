@@ -11,7 +11,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 from database.db import Base
-from database.models import Task, User
+from database.models import Task, User, Comment
 
 target_metadata = Base.metadata
 

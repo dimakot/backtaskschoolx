@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
+from core.exceptions import TaskNotFound
 from database.models import User
 from schemas.task import TaskCreate, TaskUpdate, TaskResponse
 from database.db import get_db
 from repositories.task_repository import TaskRepository
+from services.task_service import TaskService
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -17,7 +19,8 @@ def create_task(
     current_user: User = Depends(get_current_user),
 ):
     task_repo = TaskRepository(db)
-    return task_repo.create_task(task, owner_id=current_user.id)
+    task_service = TaskService(task_repo)
+    return task_service.create_task(task, owner_id=current_user.id)
 
 
 @router.get("/", response_model=list[TaskResponse])
@@ -38,7 +41,7 @@ def get_task(
     task_repo = TaskRepository(db)
     task = task_repo.get_task_by_id(task_id=task_id, owner_id=current_user.id)
     if not task:
-        raise HTTPException(status_code=404, detail="Задача не найдена")
+        raise TaskNotFound()
     return task
 
 
@@ -52,7 +55,7 @@ def update_task(
     task_repo = TaskRepository(db)
     task = task_repo.get_task_by_id(task_id=task_id, owner_id=current_user.id)
     if not task:
-        raise HTTPException(status_code=404, detail="Задача не найдена")
+        raise TaskNotFound()
 
     return task_repo.update_task(task, task_data)
 
@@ -66,6 +69,6 @@ def delete_task(
     task_repo = TaskRepository(db)
     task = task_repo.get_task_by_id(task_id=task_id, owner_id=current_user.id)
     if not task:
-        raise HTTPException(status_code=404, detail="Задача не найдена")
+        raise TaskNotFound()
     task_repo.delete_task(task)
     return {"message": "Задача удалена"}
