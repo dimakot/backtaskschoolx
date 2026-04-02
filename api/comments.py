@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.dependencies import get_current_user
 from core.exceptions import CommentNotFound, TaskNotFound
@@ -14,19 +14,19 @@ router = APIRouter(prefix="/v1/tasks", tags=["Comments"])
 
 
 @router.post("/{task_id}/comments", response_model=CommentResponse, status_code=201)
-def create_comment(
+async def create_comment(
     task_id: int,
     data: CommentCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     task_repo = TaskRepository(db)
-    task = task_repo.get_task_by_id(task_id=task_id, owner_id=current_user.id)
+    task = await task_repo.get_task_by_id(task_id=task_id, owner_id=current_user.id)
     if task is None:
         raise TaskNotFound()
 
     comment_repo = CommentRepository(db)
-    return comment_repo.create_comment(
+    return await comment_repo.create_comment(
         task_id=task_id,
         author_id=current_user.id,
         content=data.content,
@@ -34,18 +34,18 @@ def create_comment(
 
 
 @router.get("/{task_id}/comments", response_model=list[CommentResponse])
-def get_comments(
+async def get_comments(
     task_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     task_repo = TaskRepository(db)
-    task = task_repo.get_task_by_id(task_id=task_id, owner_id=current_user.id)
+    task = await task_repo.get_task_by_id(task_id=task_id, owner_id=current_user.id)
     if task is None:
         raise TaskNotFound()
 
     comment_repo = CommentRepository(db)
-    comments = comment_repo.get_task_comments(task_id=task_id)
+    comments = await comment_repo.get_task_comments(task_id=task_id)
     if not comments:
         raise CommentNotFound("Комментарии не найдены")
     return comments
